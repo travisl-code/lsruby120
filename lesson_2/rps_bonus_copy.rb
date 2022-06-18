@@ -1,3 +1,4 @@
+# rubocop:disable Layout/LineLength
 =begin
 1. I first built this as a Score class for practice, and wound up asking about it Slack. It seemed unnecessary as a standalone class though because there was more data passed than needed to be. Instead, I implemented a `@total_wins` instance variable for each Player object and evaluated that after each round.
 
@@ -9,6 +10,7 @@
 
 5. For the computer personalities, I don't think I had a very solid way of doing this. It made the most sense at the time to build this as part of the Computer class because that's where the `@name` instance variable is. I suppose I could have built personalities as individual classes and instantiated a personality after the name was chosen at random. I just used a simple random number to help generate the choices.
 =end
+# rubocop:enable Layout/LineLength
 
 require 'pry'
 
@@ -47,12 +49,16 @@ class RPSGame
     puts "\n"
   end
 
-  def menu(choice)
+  def display_menu
+    puts "Please choose a number to make a selection:"
+    puts "1. Play a game"
+    puts "2. View game history"
+    puts "3. Quit game"
+  end
+
+  def menu_handler(choice)
     loop do
-      puts "Please choose a number to make a selection:"
-      puts "1. Play a game"
-      puts "2. View game history"
-      puts "3. Quit game"
+      display_menu
       choice = gets.chomp
       break if %w(1 2 3).include?(choice)
       puts "Please make a valid choice."
@@ -73,22 +79,29 @@ class RPSGame
     puts "#{computer.name} won!" if computer.total_wins >= GAMES_TO_WIN
   end
 
-  def play
-    display_welcome_message
-    new_game
+  def handle_overall_winner?
+    return false unless overall_winner?
+    display_overall_winner
+    true
+  end
+
+  def main_menu_loop
     loop do
-      if overall_winner?
-        display_overall_winner
-        break
-      end
+      break if handle_overall_winner?
       choice = nil
-      choice = menu(choice)
+      choice = menu_handler(choice)
       case choice
       when '1' then new_game
       when '2' then history
       when '3' then break
       end
     end
+  end
+
+  def play
+    display_welcome_message
+    new_game
+    main_menu_loop
     display_goodbye_message
   end
 end
@@ -102,7 +115,7 @@ class Game
     'spock' => ['scissors', 'rock']
   }
 
-  @@game_name = "#{WIN_CONDITIONS.keys.join(', ')}"
+  @@game_name = WIN_CONDITIONS.keys.join(', ')
 
   def initialize(human, computer)
     system 'clear'
@@ -112,11 +125,17 @@ class Game
   end
 
   def to_s
-    "#{@info['Player']} chose #{@info['Player Move']}; " +
-    "#{@info['Computer']} chose #{@info['Computer Move']} (Winner: #{@winner})"
+    "#{@info['Player']} chose #{@info['Player Move']}; " \
+      "#{@info['Computer']} chose #{@info['Computer Move']} " \
+      "(Winner: #{@winner})"
+  end
+
+  def self.name
+    @@game_name
   end
 
   private
+
   def display_winner
     system 'clear'
     puts self
@@ -147,11 +166,7 @@ class Game
   end
 
   def winner?(player, other_player)
-    player.move.win_against.include?("#{other_player.move}")
-  end
-
-  def self.name
-    @@game_name
+    player.move.win_against.include?(other_player.move.to_s)
   end
 end
 
@@ -172,6 +187,7 @@ class Player
   end
 
   private
+
   attr_writer :name, :move
 end
 
@@ -199,6 +215,7 @@ class Human < Player
   end
 
   private
+
   def handle_choice(choice)
     self.move = case choice
                 when 'rock'     then Rock.new
@@ -224,12 +241,12 @@ class Computer < Player
   end
 
   private
+
   def personality_im_sorry_dave
     sample = rand(100)
-    case
-    when sample < 60 then Scissors.new
-    when sample <= 85 then Rock.new
-    when sample <= 93 then Lizard.new
+    if sample < 60 then Scissors.new
+    elsif sample <= 85 then Rock.new
+    elsif sample <= 93 then Lizard.new
     else Spock.new
     end
   end
@@ -240,19 +257,16 @@ class Computer < Player
 
   def personality_translation
     sample = rand(100)
-    case
-    when sample < 50 then Spock.new
-    when sample < 75 then Lizard.new
-    when sample < 90 then Paper.new
-    when sample < 95 then Scissors.new
+    if sample < 50 then Spock.new
+    elsif sample < 75 then Lizard.new
+    elsif sample < 90 then Paper.new
+    elsif sample < 95 then Scissors.new
     else Rock.new
     end
   end
 end
 
 class Move
-  attr_reader :win_against
-  
   def to_s
     @value
   end
