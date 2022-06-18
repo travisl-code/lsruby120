@@ -1,0 +1,24 @@
+Comparing RPS game design...
+Version 2 saved as rps_1.rb
+
+Version 1 had a single Player class, where we specified the player type.
+Version 2 has a Player class inherited by subclasses Human and Computer.
+
+is version 2 better? Why or why not?
+- I think it's better to have removed some of the conditional branches/logic from the methods like `choose` and `set_name`, so I do like the subclassed design better. I think the code is more readable this way.
+
+what is the primary improvement of this new design?
+- I think the primary improvement is the readability of the code. With the hierarchical nature between players of the game and whether it's a human/computer player, it makes it easier to define methods specific to that object. The other good thing is that we still have the ability with method lookup pathing to create methods that are generic to the superclass, like how we use the getters/setters for `name` and `move`, but those values are actually set using the subclass behaviors.
+
+what is the primary drawback of this new design?
+- I'm not too sure what the primary drawback is, but one thing I see is that we're now having to duplicate some code within the context of Human and Computer objects (like checking legal input values 'rock', 'paper', 'scissors'), but this could probably be avoided with the use of a class constant defined in the superclass.
+
+
+Version 3 saved as rps_2.rb
+Added Move class. Changed functionality of the `display_winner` method; added Move instance variables for `rock?`, `paper?`, `scissors?`, `>`, and `<`.
+
+Primary improvement of this design?
+- I think the primary improvement is simply the creation of the Move class. There were simply too many conditionals being checked inside the `display_winner` method, and some of that needed to be abstracted. It also makes sense to create a Move class and instance object that is a collaborator in our Player class.
+
+Primary drawback?
+- I'm not wild about much of the implementation of the Move class. For example, we created 2 methods, `>` and `<`, where they did almost the exact same functionality. It would have made more sense to create one, like `evaluate_win(other_move)`, and just pass either the player's move or the computer's move as the argument. It feels like the main goal was to implement comparable object methods, when a different implementation would have prevented us from needing to make 5 new methods.
