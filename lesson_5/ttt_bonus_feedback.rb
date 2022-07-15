@@ -41,6 +41,7 @@ class TTTGame
   end
 
   def first_move_valid?(choice)
+    return true if 'random'.match(choice)
     (@players.map(&:name) + ['random']).map(&:downcase).include?(choice)
   end
 
@@ -48,7 +49,7 @@ class TTTGame
     @players.each do |player|
       if player.name.downcase == choice
         @current_marker = player.marker
-      elsif choice == 'random'
+      elsif 'random'.match(choice)
         @current_marker = @players.map(&:marker).sample
       end
     end
@@ -58,7 +59,7 @@ class TTTGame
     choice = nil
     loop do
       puts "\nWho will make the first move? ('#{@human.name}', "\
-           "'#{@computer.name}', or 'random')"
+           "'#{@computer.name}', or 'random' / 'r')"
       choice = gets.chomp.downcase
       break process_first_move(choice) if first_move_valid?(choice)
 
@@ -238,18 +239,6 @@ class Board
 
       end
     end
-
-    # Tested implementation with sort...
-
-    # WINNING_LINES.each do |line|
-    #   squares = @squares.values_at(*line).sort
-    #   empty_count = squares.map(&:marker).count(Square::INITIAL_MARKER)
-    #   if empty_count == 1 && squares[1].marker == squares[2].marker
-    #     empty = squares.select { |sq| sq.marker == Square::INITIAL_MARKER }
-    #     return empty.first.number
-
-    #   end
-    # end
     nil
   end
 
@@ -311,26 +300,35 @@ class Square
   def marked?
     marker != INITIAL_MARKER
   end
-
-  # Future implementation
-  # def ==(other_marker)
-  #   marker == other_marker
-  # end
-
-  # def <=>(other)
-  #   marker <=> other.marker
-  # end
 end
 
 # Definition of Player with unique marker
 class Player
   attr_reader :marker, :name
 
+  def initialize(other_player = nil)
+    @name = set_name
+    @marker = choose_marker(other_player)
+  end
+
   private
 
   attr_writer :marker
 
-  def valid?(marker, other_player = nil)
+  def choose_marker(other = nil)
+    choice = nil
+    puts "\nWhat marker will #{name} use? (or type 'default' or 'd')"
+    loop do
+      choice = gets.chomp
+      choice = ('default'.match(choice) ? self.class::DEFAULT_MARKER : choice)
+      break if valid?(choice, other)
+
+      puts "Please make a valid choice."
+    end
+    choice
+  end
+
+  def valid?(marker, other_player)
     if other_player
       !marker.nil? && marker.size == 1 && marker != other_player.marker
     else
@@ -341,12 +339,7 @@ end
 
 # Definition of Human for name
 class Human < Player
-  DEFAULT_HUMAN_MARKER = 'X'
-
-  def initialize
-    @name = set_name
-    @marker = choose_marker
-  end
+  DEFAULT_MARKER = 'X'
 
   private
 
@@ -354,55 +347,24 @@ class Human < Player
     puts 'What is your name?'
     name = nil
     loop do
-      name = gets.chomp
+      name = gets.chomp.strip
       break if name != ''
 
       puts 'Please enter a value.'
     end
     name
   end
-
-  def choose_marker
-    choice = nil
-    puts "\nWhat marker will you use, #{name}? (or type 'default')"
-    loop do
-      choice = gets.chomp
-      choice = (choice.downcase == 'default' ? DEFAULT_HUMAN_MARKER : choice)
-      break if valid?(choice)
-
-      puts "Please make a valid choice."
-    end
-    choice
-  end
 end
 
 # Definition of Computer
 class Computer < Player
   NAMES = ['Hal', 'C3P0', 'WALL-E']
-  DEFAULT_COMPUTER_MARKER = 'O'
-
-  def initialize(human_player)
-    @name = set_name
-    @marker = choose_marker(human_player)
-  end
+  DEFAULT_MARKER = 'O'
 
   private
 
   def set_name
     NAMES.sample
-  end
-
-  def choose_marker(human_player)
-    choice = nil
-    loop do
-      puts "\nWhat marker will #{name} use? (or type 'default')"
-      choice = gets.chomp
-      choice = (choice.downcase == 'default' ? DEFAULT_COMPUTER_MARKER : choice)
-      break if valid?(choice, human_player)
-
-      puts "Please make a valid choice."
-    end
-    choice
   end
 end
 
